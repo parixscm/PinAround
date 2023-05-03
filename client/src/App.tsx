@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, FormEvent } from "react";
 import axios from "axios";
 import moment from "moment";
 import "moment/locale/ko";
-import { Pin, NewCoordinate, ViewState } from "./typings";
+import { Pin, NewCoordinate, ViewState, NewPin } from "./typings";
 import Map, { Marker, Popup } from "react-map-gl";
 import { FaMapMarkerAlt, FaStar } from "react-icons/fa";
 import mapboxgl from "mapbox-gl";
@@ -19,6 +19,10 @@ function App() {
   const [newCoordinate, setNewCoordinate] = useState<NewCoordinate | null>(
     null
   );
+  // 새로 입력한 핀 내용
+  const placeRef = useRef<HTMLInputElement>(null);
+  const reviewRef = useRef<HTMLTextAreaElement>(null);
+  const rateRef = useRef<HTMLSelectElement>(null);
 
   // ✅ 핀 클릭
   const handleClickPin = (pin: Pin) => {
@@ -31,6 +35,27 @@ function App() {
   const handleAddNewPin = (event: mapboxgl.MapLayerMouseEvent) => {
     const { lng, lat } = event.lngLat;
     setNewCoordinate({ lng, lat });
+  };
+
+  // ✅ 새로운 핀 정보 등록
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const newPin: NewPin = {
+      username: currentUser,
+      place: placeRef.current?.value!,
+      review: reviewRef.current?.value!,
+      rating: +rateRef.current?.value!,
+      lat: newCoordinate?.lat!,
+      lng: newCoordinate?.lng!,
+    };
+
+    try {
+      const { data } = await axios.post<Pin>("/pins", newPin);
+      setPins(prev => [...prev!, data]);
+      setNewCoordinate(null);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   useEffect(() => {
@@ -94,11 +119,7 @@ function App() {
                 <p>{pin.review}</p>
                 <label className="label">별점</label>
                 <div className="flex space-x-0.5 text-yellow-400">
-                  <FaStar />
-                  <FaStar />
-                  <FaStar />
-                  <FaStar />
-                  <FaStar />
+                  {Array(pin.rating).fill(<FaStar />)}
                 </div>
                 <label className="label">정보</label>
                 <span>
@@ -112,7 +133,7 @@ function App() {
           )}
           {newCoordinate && (
             <Popup
-              className="w-64 opacity-70"
+              className="w-64 opacity-60"
               longitude={newCoordinate.lng}
               latitude={newCoordinate.lat}
               anchor="top-left"
@@ -120,22 +141,32 @@ function App() {
               closeOnClick={false}
               onClose={() => setNewCoordinate(null)}
             >
-              <form className="w-full h-64 flex flex-col justify-between text-gray-700">
+              <form
+                onSubmit={handleSubmit}
+                className="w-full h-64 flex flex-col justify-between text-gray-700"
+              >
                 <label className="label font-semibold text-[#eb2f06]">
                   장소
                 </label>
                 <input
-                  className="px-2 w-full border-b-[1px] border-gray-300 outline-none"
+                  ref={placeRef}
                   type="text"
+                  className="px-2 w-full border-b-[1px] border-gray-400 outline-none focus:border-b-2"
                 />
                 <label className="label font-semibold text-[#eb2f06]">
                   리뷰
                 </label>
-                <textarea className="px-2 w-full border-[1px] border-gray-300 outline-none" />
+                <textarea
+                  ref={reviewRef}
+                  className="px-2 w-full border-[1px] border-gray-400 outline-none focus:border-b-2"
+                />
                 <label className="label font-semibold text-[#eb2f06]">
                   별점
                 </label>
-                <select className="w-full border-b-[1px] border-gray-300 outline-none">
+                <select
+                  ref={rateRef}
+                  className="w-full border-b-[1px] border-gray-400 outline-none focus:border-b-2"
+                >
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
