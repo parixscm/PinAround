@@ -1,4 +1,5 @@
-export type Pins = {
+export type Pin = {
+  _id: string;
   username: string;
   place: string;
   review: string;
