@@ -7,7 +7,7 @@ const pinSchema = new mongoose.Schema(
     review: { type: String, required: true, minLength: 3 },
     rating: { type: Number, required: true, min: 0, max: 5 },
     lat: { type: Number, required: true },
-    long: { type: Number, required: true },
+    lng: { type: Number, required: true },
   },
   { timestamps: true }
 );

@@ -1,3 +1,9 @@
+export type ViewState = {
+  longitude: number;
+  latitude: number;
+  zoom: number;
+};
+
 export type Pin = {
   _id: string;
   username: string;
@@ -5,7 +11,12 @@ export type Pin = {
   review: string;
   rating: number;
   lat: number;
-  long: number;
+  lng: number;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type NewCoordinate = {
+  lng: number;
+  lat: number;
 };
