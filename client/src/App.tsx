@@ -2,21 +2,28 @@ import { useState, useEffect, useRef, FormEvent } from "react";
 import axios from "axios";
 import moment from "moment";
 import "moment/locale/ko";
-import { Pin, NewCoordinate, ViewState, NewPin, User } from "./typings";
+import { Pin, NewCoordinate, ViewState, NewPin } from "./typings";
 import Map, { Marker, Popup } from "react-map-gl";
 import { FaMapMarkerAlt, FaStar } from "react-icons/fa";
 import mapboxgl from "mapbox-gl";
 import { Signin, Signup } from "./components";
 
 function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  // 로그인 유저
+  const [currentUser, setCurrentUser] = useState<string | null>(
+    window.localStorage.getItem("User")
+  );
+  // 지도 뷰 상태 정보
   const [viewState, setViewState] = useState<ViewState | null>({
     longitude: 2.294694,
     latitude: 48.858093,
     zoom: 4,
   });
+  // 불러온 핀 정보
   const [pins, setPins] = useState<Pin[] | null>(null);
+  // 선택한 핀 정보
   const [currentPin, setCurrentPin] = useState<Pin | null>(null);
+  // 새로운 핀 좌표 정보
   const [newCoordinate, setNewCoordinate] = useState<NewCoordinate | null>(
     null
   );
@@ -45,7 +52,7 @@ function App() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const newPin: NewPin = {
-      username: currentUser?.username!,
+      username: currentUser!,
       place: placeRef.current?.value!,
       review: reviewRef.current?.value!,
       rating: +rateRef.current?.value!,
@@ -55,11 +62,17 @@ function App() {
 
     try {
       const { data } = await axios.post<Pin>("/pins", newPin);
+      console.log(data);
       setPins(prev => [...prev!, data]);
       setNewCoordinate(null);
     } catch (err) {
       console.log(err);
     }
+  };
+
+  const handleSignout = () => {
+    window.localStorage.removeItem("User");
+    setCurrentUser(null);
   };
 
   useEffect(() => {
@@ -188,7 +201,10 @@ function App() {
             </Popup>
           )}
           {currentUser ? (
-            <button className="authBtn bg-violet-600 absolute top-3 right-3 text-base">
+            <button
+              onClick={handleSignout}
+              className="authBtn bg-violet-600 absolute top-3 right-3 text-base"
+            >
               로그아웃
             </button>
           ) : (
@@ -209,44 +225,8 @@ function App() {
           )}
         </div>
       ))}
-      {/* <dialog ref={signupRef}>
-        <div className="p-5 m-auto space-y-6 w-96 h-80 flex flex-col items-center rounded-xl bg-white">
-          <span className="mx-auto text-center text-xl font-semibold">
-            ✈️ 추억을 <span className="text-[#eb2f06]">핀</span> 해보세요!
-          </span>
-          <form className="h-full flex flex-col items-center justify-between">
-            <input
-              type="text"
-              placeholder="닉네임"
-              className="px-2 py-1 w-80 text-sm outline-none border-b-[1px] border-gray-900 focus:border-b-[2px]"
-            />
-            <input
-              type="email"
-              placeholder="이메일"
-              className="px-2 py-1 w-80 text-sm outline-none border-b-[1px] border-gray-900 focus:border-b-[2px]"
-            />
-            <input
-              type="password"
-              placeholder="비밀번호"
-              className="px-2 py-1 w-80 text-sm outline-none border-b-[1px] border-gray-900 focus:border-b-[2px]"
-            />
-            <button className="py-2 px-4 w-full rounded-md bg-[#eb2f06] text-white text-sm">
-              시작하기
-            </button>
-            <button
-              onClick={event => {
-                event.preventDefault();
-                signupRef?.current!.close();
-              }}
-              className="authBtn bg-purple-500 text-base"
-            >
-              모달 닫기
-            </button>
-          </form>
-        </div>
-      </dialog> */}
       <Signup ref={signupRef} />
-      <Signin ref={signinRef} />
+      <Signin ref={signinRef} handleUser={setCurrentUser} />
     </Map>
   );
 }
