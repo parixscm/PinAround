@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const express = require("express");
+const cors = require("cors");
 require("dotenv").config();
 const pinRoute = require("./Routes/pin");
 const userRoute = require("./Routes/user");
@@ -8,6 +9,7 @@ const app = express();
 
 // 미들웨어
 app.use(express.json());
+app.use(cors());
 app.use("/api/pins", pinRoute);
 app.use("/api/users", userRoute);
 

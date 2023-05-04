@@ -2,13 +2,14 @@ import { useState, useEffect, useRef, FormEvent } from "react";
 import axios from "axios";
 import moment from "moment";
 import "moment/locale/ko";
-import { Pin, NewCoordinate, ViewState, NewPin } from "./typings";
+import { Pin, NewCoordinate, ViewState, NewPin, User } from "./typings";
 import Map, { Marker, Popup } from "react-map-gl";
 import { FaMapMarkerAlt, FaStar } from "react-icons/fa";
 import mapboxgl from "mapbox-gl";
+import { Signin, Signup } from "./components";
 
 function App() {
-  const [currentUser, setCurrentUser] = useState("jin0e");
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [viewState, setViewState] = useState<ViewState | null>({
     longitude: 2.294694,
     latitude: 48.858093,
@@ -23,6 +24,9 @@ function App() {
   const placeRef = useRef<HTMLInputElement>(null);
   const reviewRef = useRef<HTMLTextAreaElement>(null);
   const rateRef = useRef<HTMLSelectElement>(null);
+  // 로그인, 로그아웃 Ref
+  const signupRef = useRef<HTMLDialogElement>(null);
+  const signinRef = useRef<HTMLDialogElement>(null);
 
   // ✅ 핀 클릭
   const handleClickPin = (pin: Pin) => {
@@ -41,7 +45,7 @@ function App() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const newPin: NewPin = {
-      username: currentUser,
+      username: currentUser?.username!,
       place: placeRef.current?.value!,
       review: reviewRef.current?.value!,
       rating: +rateRef.current?.value!,
@@ -68,6 +72,7 @@ function App() {
       }
     };
     getAllPins();
+    signupRef.current?.close();
   }, []);
 
   return (
@@ -182,8 +187,66 @@ function App() {
               </form>
             </Popup>
           )}
+          {currentUser ? (
+            <button className="authBtn bg-violet-600 absolute top-3 right-3 text-base">
+              로그아웃
+            </button>
+          ) : (
+            <div className="absolute top-3 right-3">
+              <button
+                onClick={() => signinRef.current!.showModal()}
+                className="authBtn bg-green-600 text-base"
+              >
+                로그인
+              </button>
+              <button
+                onClick={() => signupRef.current!.showModal()}
+                className="authBtn bg-yellow-500 text-base"
+              >
+                회원가입
+              </button>
+            </div>
+          )}
         </div>
       ))}
+      {/* <dialog ref={signupRef}>
+        <div className="p-5 m-auto space-y-6 w-96 h-80 flex flex-col items-center rounded-xl bg-white">
+          <span className="mx-auto text-center text-xl font-semibold">
+            ✈️ 추억을 <span className="text-[#eb2f06]">핀</span> 해보세요!
+          </span>
+          <form className="h-full flex flex-col items-center justify-between">
+            <input
+              type="text"
+              placeholder="닉네임"
+              className="px-2 py-1 w-80 text-sm outline-none border-b-[1px] border-gray-900 focus:border-b-[2px]"
+            />
+            <input
+              type="email"
+              placeholder="이메일"
+              className="px-2 py-1 w-80 text-sm outline-none border-b-[1px] border-gray-900 focus:border-b-[2px]"
+            />
+            <input
+              type="password"
+              placeholder="비밀번호"
+              className="px-2 py-1 w-80 text-sm outline-none border-b-[1px] border-gray-900 focus:border-b-[2px]"
+            />
+            <button className="py-2 px-4 w-full rounded-md bg-[#eb2f06] text-white text-sm">
+              시작하기
+            </button>
+            <button
+              onClick={event => {
+                event.preventDefault();
+                signupRef?.current!.close();
+              }}
+              className="authBtn bg-purple-500 text-base"
+            >
+              모달 닫기
+            </button>
+          </form>
+        </div>
+      </dialog> */}
+      <Signup ref={signupRef} />
+      <Signin ref={signinRef} />
     </Map>
   );
 }

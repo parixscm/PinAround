@@ -1,3 +1,8 @@
+export type User = {
+  _id: string;
+  username: string;
+};
+
 export type ViewState = {
   longitude: number;
   latitude: number;
