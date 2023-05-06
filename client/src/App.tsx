@@ -1,25 +1,30 @@
-import { useState, useEffect, useRef, FormEvent } from "react";
 import axios from "axios";
-import moment from "moment";
-import "moment/locale/ko";
-import { Pin, NewCoordinate, ViewState, NewPin } from "./typings";
-import Map, { Marker, Popup } from "react-map-gl";
-import { FaMapMarkerAlt, FaStar } from "react-icons/fa";
 import mapboxgl from "mapbox-gl";
-import { Signin, Signup } from "./components";
+import Map from "react-map-gl";
+import { Pin, NewCoordinate, ViewState } from "./typings";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { BsFillQuestionCircleFill } from "react-icons/bs";
+import {
+  AuthButton,
+  NewPinPlaceInfo,
+  PinPlace,
+  PinPlaceInfo,
+  Signin,
+  SigninAlert,
+  Signup,
+  Usage,
+} from "./components";
 
 function App() {
-  // 로그인 유저
-  const [currentUser, setCurrentUser] = useState<string | null>(
-    window.localStorage.getItem("User")
-  );
   // 지도 뷰 상태 정보
   const [viewState, setViewState] = useState<ViewState | null>({
     longitude: 2.294694,
     latitude: 48.858093,
     zoom: 4,
   });
-  // 불러온 핀 정보
+  const [currentUser, setCurrentUser] = useState<string | null>(
+    window.localStorage.getItem("User")
+  );
   const [pins, setPins] = useState<Pin[] | null>(null);
   // 선택한 핀 정보
   const [currentPin, setCurrentPin] = useState<Pin | null>(null);
@@ -27,53 +32,36 @@ function App() {
   const [newCoordinate, setNewCoordinate] = useState<NewCoordinate | null>(
     null
   );
-  // 새로 입력한 핀 내용
-  const placeRef = useRef<HTMLInputElement>(null);
-  const reviewRef = useRef<HTMLTextAreaElement>(null);
-  const rateRef = useRef<HTMLSelectElement>(null);
-  // 로그인, 로그아웃 Ref
+  const usageRef = useRef<HTMLDialogElement>(null);
   const signupRef = useRef<HTMLDialogElement>(null);
   const signinRef = useRef<HTMLDialogElement>(null);
+  const signinAlertRef = useRef<HTMLDialogElement>(null);
 
-  // ✅ 핀 클릭
-  const handleClickPin = (pin: Pin) => {
+  // 기존 핀 클릭
+  const handleClickPin = useCallback((pin: Pin) => {
     setCurrentPin(pin);
-    setViewState(prev => ({ ...prev!, longitude: pin.lng, latitude: pin.lat }));
     setNewCoordinate(null);
-  };
+    setViewState(prev => ({ ...prev!, longitude: pin.lng, latitude: pin.lat }));
+  }, []);
 
-  // ✅ 새로운 핀 추가
-  const handleAddNewPin = (event: mapboxgl.MapLayerMouseEvent) => {
+  // 새로운 핀 추가
+  const handleAddNewPin = useCallback((event: mapboxgl.MapLayerMouseEvent) => {
     const { lng, lat } = event.lngLat;
     setNewCoordinate({ lng, lat });
-  };
+  }, []);
 
-  // ✅ 새로운 핀 정보 등록
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const newPin: NewPin = {
-      username: currentUser!,
-      place: placeRef.current?.value!,
-      review: reviewRef.current?.value!,
-      rating: +rateRef.current?.value!,
-      lat: newCoordinate?.lat!,
-      lng: newCoordinate?.lng!,
-    };
+  const showSigninModal = useCallback(() => {
+    signinRef.current!.showModal();
+  }, []);
 
-    try {
-      const { data } = await axios.post<Pin>("/pins", newPin);
-      console.log(data);
-      setPins(prev => [...prev!, data]);
-      setNewCoordinate(null);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  const showSignupModal = useCallback(() => {
+    signupRef.current!.showModal();
+  }, []);
 
-  const handleSignout = () => {
+  const handleSignout = useCallback(() => {
     window.localStorage.removeItem("User");
     setCurrentUser(null);
-  };
+  }, []);
 
   useEffect(() => {
     const getAllPins = async () => {
@@ -85,7 +73,6 @@ function App() {
       }
     };
     getAllPins();
-    signupRef.current?.close();
   }, []);
 
   return (
@@ -96,137 +83,56 @@ function App() {
       mapStyle="mapbox://styles/mapbox/streets-v9"
       onMove={event => setViewState(event.viewState)}
       onDblClick={event => {
-        handleAddNewPin(event);
-        setCurrentPin(null);
+        if (!currentUser) {
+          signinAlertRef.current?.showModal();
+        } else {
+          handleAddNewPin(event);
+          setCurrentPin(null);
+        }
       }}
       mapboxAccessToken={process.env.REACT_APP_MAPBOX_ACCESS_TOKEN}
     >
+      <h1 className="absolute left-3 top-3 animate-text bg-gradient-to-r from-pink-500 to-green-500 bg-clip-text font-jost text-5xl font-black text-transparent">
+        PinAround
+      </h1>
+
+      <div className="absolute right-3 top-3 flex items-center space-x-2">
+        <button onClick={() => usageRef.current?.showModal()}>
+          <BsFillQuestionCircleFill size={20} />
+        </button>
+        {currentUser ? (
+          <AuthButton category="로그아웃" handleClick={handleSignout} />
+        ) : (
+          <div className="space-x-2">
+            <AuthButton category="로그인" handleClick={showSigninModal} />
+            <AuthButton category="회원가입" handleClick={showSignupModal} />
+          </div>
+        )}
+      </div>
+
       {pins?.map((pin, idx) => (
         <div key={idx}>
-          <Marker
-            anchor="center"
-            longitude={pin.lng}
-            latitude={pin.lat}
-            onClick={() => handleClickPin(pin)}
-          >
-            <FaMapMarkerAlt
-              size={"1.8rem"}
-              className={
-                pin.username === `${currentUser}`
-                  ? "text-[#eb2f06]"
-                  : "text-purple-500"
-              }
-            />
-          </Marker>
+          <PinPlace pin={pin} user={currentUser} handleClick={handleClickPin} />
+
           {pin._id === currentPin?._id && (
-            <Popup
-              className="w-64 opacity-90"
-              longitude={pin.lng}
-              latitude={pin.lat}
-              anchor="top-left"
-              focusAfterOpen={false}
-              closeOnClick={false}
-              onClose={() => setCurrentPin(null)}
-            >
-              <div className="w-full h-64 flex flex-col justify-around text-[14px]">
-                <label className="label">장소</label>
-                <h4>
-                  <b>{pin.place}</b>
-                </h4>
-                <label className="label">리뷰</label>
-                <p>{pin.review}</p>
-                <label className="label">별점</label>
-                <div className="flex space-x-0.5 text-yellow-400">
-                  {Array(pin.rating).fill(<FaStar />)}
-                </div>
-                <label className="label">정보</label>
-                <span>
-                  작성자: <b>{pin.username}</b>
-                </span>
-                <span className="text-[12px]">
-                  작성시간: {moment(pin.createdAt).fromNow()}
-                </span>
-              </div>
-            </Popup>
-          )}
-          {newCoordinate && (
-            <Popup
-              className="w-64 opacity-60"
-              longitude={newCoordinate.lng}
-              latitude={newCoordinate.lat}
-              anchor="top-left"
-              focusAfterOpen={false}
-              closeOnClick={false}
-              onClose={() => setNewCoordinate(null)}
-            >
-              <form
-                onSubmit={handleSubmit}
-                className="w-full h-64 flex flex-col justify-between text-gray-700"
-              >
-                <label className="label font-semibold text-[#eb2f06]">
-                  장소
-                </label>
-                <input
-                  ref={placeRef}
-                  type="text"
-                  className="px-2 w-full border-b-[1px] border-gray-400 outline-none focus:border-b-2"
-                />
-                <label className="label font-semibold text-[#eb2f06]">
-                  리뷰
-                </label>
-                <textarea
-                  ref={reviewRef}
-                  className="px-2 w-full border-[1px] border-gray-400 outline-none focus:border-b-2"
-                />
-                <label className="label font-semibold text-[#eb2f06]">
-                  별점
-                </label>
-                <select
-                  ref={rateRef}
-                  className="w-full border-b-[1px] border-gray-400 outline-none focus:border-b-2"
-                >
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                </select>
-                <button
-                  type="submit"
-                  className="w-full border-none outline-none p-1 rounded-sm text-white bg-[#eb2f06] cursor-pointer"
-                >
-                  핀 하기
-                </button>
-              </form>
-            </Popup>
-          )}
-          {currentUser ? (
-            <button
-              onClick={handleSignout}
-              className="authBtn bg-violet-600 absolute top-3 right-3 text-base"
-            >
-              로그아웃
-            </button>
-          ) : (
-            <div className="absolute top-3 right-3">
-              <button
-                onClick={() => signinRef.current!.showModal()}
-                className="authBtn bg-green-600 text-base"
-              >
-                로그인
-              </button>
-              <button
-                onClick={() => signupRef.current!.showModal()}
-                className="authBtn bg-yellow-500 text-base"
-              >
-                회원가입
-              </button>
-            </div>
+            <PinPlaceInfo pin={pin} handleCurrentPin={setCurrentPin} />
           )}
         </div>
       ))}
+
+      {newCoordinate && (
+        <NewPinPlaceInfo
+          currentUser={currentUser}
+          newCoordinate={newCoordinate}
+          handlePins={setPins}
+          handleNewCoordinate={setNewCoordinate}
+        />
+      )}
+
+      <Usage ref={usageRef} />
       <Signup ref={signupRef} />
       <Signin ref={signinRef} handleUser={setCurrentUser} />
+      <SigninAlert ref={signinAlertRef} />
     </Map>
   );
 }

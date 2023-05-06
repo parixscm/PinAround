@@ -4,9 +4,7 @@ const pinModel = require("../Models/pin");
 const createPin = async (req, res) => {
   const newPin = new pinModel(req.body);
   try {
-    console.log(newPin); // 굿
     const savedPin = await newPin.save();
-    console.log(savedPin); // 낫굿
     res.status(200).json(savedPin);
   } catch (err) {
     res.status(500).json(err);
