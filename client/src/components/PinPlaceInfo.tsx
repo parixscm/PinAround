@@ -29,7 +29,11 @@ function PinPlaceInfo({ pin, handleCurrentPin }: PinPlaceInfoProps) {
         <p>{pin.review}</p>
         <label className="label">별점</label>
         <div className="flex space-x-0.5 text-yellow-400">
-          {Array(pin.rating).fill(<FaStar />)}
+          {Array(pin.rating)
+            .fill(0)
+            .map((_, idx) => (
+              <FaStar key={idx} />
+            ))}
         </div>
         <label className="label">정보</label>
         <span>

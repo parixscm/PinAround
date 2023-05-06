@@ -42,7 +42,10 @@ const Signup = forwardRef<HTMLDialogElement>((props, ref) => {
   };
 
   return (
-    <dialog ref={ref} className="rounded-lg">
+    <dialog
+      ref={ref}
+      className="rounded-lg backdrop:bg-black backdrop:opacity-70"
+    >
       <div className="m-auto flex h-80 w-96 flex-col items-center space-y-6 rounded-lg bg-white p-5 outline-none">
         <span className="mx-auto text-center text-xl font-semibold">
           ✈️ 추억을 <span className="text-[#eb2f06]">핀</span> 해보세요!
@@ -65,14 +68,14 @@ const Signup = forwardRef<HTMLDialogElement>((props, ref) => {
                 입력한 정보를 확인해주세요! 🧐
               </span>
             )}
-            <button className="w-full rounded-md bg-[#eb2f06] px-4 py-2 text-sm text-white hover:brightness-90">
+            <button className="w-full rounded-md bg-[#eb2f06] px-4 py-2 text-sm text-white outline-none hover:brightness-90">
               가입하기
             </button>
           </div>
         </form>
         <button
           onClick={handleClose}
-          className="cursor-pointer rounded-md bg-gray-500 px-4 py-2 text-center text-sm text-white hover:brightness-90"
+          className="cursor-pointer rounded-md bg-gray-500 px-4 py-2 text-center text-sm text-white outline-none hover:brightness-90"
         >
           닫기
         </button>

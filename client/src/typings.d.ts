@@ -4,8 +4,16 @@ export type User = {
 };
 
 export type ViewState = {
+  bearing: number;
   longitude: number;
   latitude: number;
+  padding: {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  };
+  pitch: number;
   zoom: number;
 };
 

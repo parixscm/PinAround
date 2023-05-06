@@ -18,8 +18,16 @@ import {
 function App() {
   // 지도 뷰 상태 정보
   const [viewState, setViewState] = useState<ViewState | null>({
+    bearing: 0,
     longitude: 2.294694,
     latitude: 48.858093,
+    padding: {
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
+    pitch: 0,
     zoom: 4,
   });
   const [currentUser, setCurrentUser] = useState<string | null>(
@@ -97,7 +105,10 @@ function App() {
       </h1>
 
       <div className="absolute right-3 top-3 flex items-center space-x-2">
-        <button onClick={() => usageRef.current?.showModal()}>
+        <button
+          onClick={() => usageRef.current?.showModal()}
+          className="outline-none"
+        >
           <BsFillQuestionCircleFill size={20} />
         </button>
         {currentUser ? (
