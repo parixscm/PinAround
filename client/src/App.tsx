@@ -40,6 +40,7 @@ function App() {
   const [newCoordinate, setNewCoordinate] = useState<NewCoordinate | null>(
     null
   );
+  const [showNewPin, setShowNewPin] = useState(false);
   const usageRef = useRef<HTMLDialogElement>(null);
   const signupRef = useRef<HTMLDialogElement>(null);
   const signinRef = useRef<HTMLDialogElement>(null);
@@ -52,11 +53,19 @@ function App() {
     setViewState(prev => ({ ...prev!, longitude: pin.lng, latitude: pin.lat }));
   }, []);
 
-  // 새로운 핀 추가
-  const handleAddNewPin = useCallback((event: mapboxgl.MapLayerMouseEvent) => {
-    const { lng, lat } = event.lngLat;
-    setNewCoordinate({ lng, lat });
-  }, []);
+  const handleMapDbClick = useCallback(
+    (event: mapboxgl.MapLayerMouseEvent) => {
+      event.preventDefault();
+      if (!currentUser) {
+        signinAlertRef.current?.showModal();
+      } else {
+        const { lng, lat } = event.lngLat;
+        setCurrentPin(null);
+        setNewCoordinate({ lng, lat });
+      }
+    },
+    [currentUser]
+  );
 
   const showSigninModal = useCallback(() => {
     signinRef.current!.showModal();
@@ -83,6 +92,19 @@ function App() {
     getAllPins();
   }, []);
 
+  useEffect(() => {
+    if (!newCoordinate) {
+      return;
+    } else {
+      setShowNewPin(true);
+      setViewState(prev => ({
+        ...prev!,
+        longitude: newCoordinate.lng,
+        latitude: newCoordinate.lat,
+      }));
+    }
+  }, [newCoordinate]);
+
   return (
     <Map
       {...viewState}
@@ -90,14 +112,8 @@ function App() {
       style={{ width: "100vw", height: "100vh" }}
       mapStyle="mapbox://styles/mapbox/streets-v9"
       onMove={event => setViewState(event.viewState)}
-      onDblClick={event => {
-        if (!currentUser) {
-          signinAlertRef.current?.showModal();
-        } else {
-          handleAddNewPin(event);
-          setCurrentPin(null);
-        }
-      }}
+      // ✅
+      onDblClick={handleMapDbClick}
       mapboxAccessToken={process.env.REACT_APP_MAPBOX_ACCESS_TOKEN}
     >
       <h1 className="absolute left-3 top-3 animate-text bg-gradient-to-r from-pink-500 to-green-500 bg-clip-text font-jost text-5xl font-black text-transparent">
@@ -131,12 +147,13 @@ function App() {
         </div>
       ))}
 
-      {newCoordinate && (
+      {newCoordinate && showNewPin && (
         <NewPinPlaceInfo
           currentUser={currentUser}
           newCoordinate={newCoordinate}
           handlePins={setPins}
           handleNewCoordinate={setNewCoordinate}
+          handleShowNewPin={setShowNewPin}
         />
       )}
 

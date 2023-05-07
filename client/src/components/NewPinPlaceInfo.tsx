@@ -10,6 +10,7 @@ type NewPinPlaceInfoProps = {
   handleNewCoordinate: React.Dispatch<
     React.SetStateAction<NewCoordinate | null>
   >;
+  handleShowNewPin: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 function NewPinPlaceInfo({
@@ -17,6 +18,7 @@ function NewPinPlaceInfo({
   newCoordinate,
   handlePins,
   handleNewCoordinate,
+  handleShowNewPin,
 }: NewPinPlaceInfoProps) {
   // 🔵 새로 입력한 핀 내용
   const placeRef = useRef<HTMLInputElement>(null);
@@ -51,7 +53,10 @@ function NewPinPlaceInfo({
       anchor="top-left"
       focusAfterOpen={false}
       closeOnClick={false}
-      onClose={() => handleNewCoordinate(null)}
+      onClose={() => {
+        handleNewCoordinate(null);
+        handleShowNewPin(false);
+      }}
     >
       <form
         onSubmit={handleSubmit}
