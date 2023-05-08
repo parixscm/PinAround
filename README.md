@@ -1,7 +1,5 @@
 # 🗺 PinAround
 
-<br/>
-
 ## 💁🏻 소개
 
 ![ezgif com-video-to-gif](https://user-images.githubusercontent.com/108685090/236779380-1006f7e4-0bc1-4948-baa2-2cdd8f540647.gif)
